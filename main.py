@@ -1,3 +1,12 @@
+import subprocess
+
+# Install required packages
+try:
+    subprocess.run(["pip", "install", "requests", "beautifulsoup4", "pandas", "numpy"], check=True)
+except subprocess.CalledProcessError as e:
+    print("Error occurred while installing dependencies:", e)
+
+# Now import the required modules
 import requests
 import yaml
 import pandas as pd
