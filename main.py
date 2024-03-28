@@ -9,10 +9,7 @@ class JobPost:
     def __init__(self, org_name, position, experience, salary, location, profile_name, posted_time, link, skills):
         self.org_name = org_name
         self.position = position
-        self.experience = experience\
-
-
-        
+        self.experience = experience
         self.salary = salary
         self.location = location
         self.profile_name = profile_name
@@ -21,6 +18,7 @@ class JobPost:
         self.skills = skills
 
 def parse_posted_time(posted_time_str):
+    # Parse the posted time string and return a datetime object
     posted_time_str_lower = posted_time_str.lower()
 
     if 'just posted' in posted_time_str_lower:
@@ -37,6 +35,7 @@ def parse_posted_time(posted_time_str):
         return datetime.now()
 
 def extract_job_details(job_response):
+    # Extract job details from the job response
     job_soup = BeautifulSoup(job_response.text, 'html.parser')
     salary_tag = job_soup.find('div', class_='jobTitle_jobTitle_salary__3bSw0')
     salary = salary_tag.text.strip() if salary_tag else 'Salary not provided'
@@ -50,12 +49,14 @@ def extract_job_details(job_response):
     return salary, posted_time, ','.join(skills)
 
 def extract_job_links(soup, base_url):
+    # Extract job links from the page soup
     req = soup.select('div h2[itemprop="name"]')
     job_links = [link.find('a')['href'] for link in req]
     job_links = [link if link.startswith('http') else base_url + link for link in job_links]
     return req, job_links
 
 def scrape_jobs(url):
+    # Scrape job postings from the given URL
     response = requests.get(url)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -86,6 +87,7 @@ def scrape_jobs(url):
         return []
 
 def scrape_multiple_pages(base_url, num_pages):
+    # Scrape job postings from multiple pages
     all_jobs = []
     for page in range(1, num_pages + 1):
         url = f"{base_url}&page={page}"
@@ -95,6 +97,7 @@ def scrape_multiple_pages(base_url, num_pages):
     return all_jobs
 
 def remove_duplicates(jobs):
+    # Remove duplicate job postings based on unique links
     unique_links = set()
     unique_jobs = []
     for job in jobs:
@@ -104,7 +107,7 @@ def remove_duplicates(jobs):
     return unique_jobs
 
 base_url = "https://www.shine.com/job-search/data-analyst-jobs?q=data-analyst"
-num_pages = 3
+num_pages = 5
 
 jobs = scrape_multiple_pages(base_url, num_pages)
 unique_jobs = remove_duplicates(jobs)
@@ -133,3 +136,4 @@ if unique_jobs:
     display(jobs_df)
 else:
     print("No job postings found.")
+
