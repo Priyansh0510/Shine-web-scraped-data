@@ -1,2 +1,6 @@
-pip install requests beautifulsoup4 pandas numpy
+requests
+beautifulsoup4
+pandas
+numpy
+python main.py
 
