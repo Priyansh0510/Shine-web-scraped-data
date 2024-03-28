@@ -2,5 +2,5 @@ requests
 beautifulsoup4
 pandas
 numpy
-python main.py
+
 
