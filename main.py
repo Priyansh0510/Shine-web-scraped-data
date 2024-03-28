@@ -1,9 +1,9 @@
 import requests
-from bs4 import BeautifulSoup
+import yaml
 import pandas as pd
-import numpy as np
-import re
+from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+import re
 
 class JobPost:
     def __init__(self, org_name, position, experience, salary, location, profile_name, posted_time, link, skills):
@@ -18,7 +18,6 @@ class JobPost:
         self.skills = skills
 
 def parse_posted_time(posted_time_str):
-    # Parse the posted time string and return a datetime object
     posted_time_str_lower = posted_time_str.lower()
 
     if 'just posted' in posted_time_str_lower:
@@ -35,7 +34,6 @@ def parse_posted_time(posted_time_str):
         return datetime.now()
 
 def extract_job_details(job_response):
-    # Extract job details from the job response
     job_soup = BeautifulSoup(job_response.text, 'html.parser')
     salary_tag = job_soup.find('div', class_='jobTitle_jobTitle_salary__3bSw0')
     salary = salary_tag.text.strip() if salary_tag else 'Salary not provided'
@@ -49,14 +47,12 @@ def extract_job_details(job_response):
     return salary, posted_time, ','.join(skills)
 
 def extract_job_links(soup, base_url):
-    # Extract job links from the page soup
     req = soup.select('div h2[itemprop="name"]')
     job_links = [link.find('a')['href'] for link in req]
     job_links = [link if link.startswith('http') else base_url + link for link in job_links]
     return req, job_links
 
 def scrape_jobs(url):
-    # Scrape job postings from the given URL
     response = requests.get(url)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -87,7 +83,6 @@ def scrape_jobs(url):
         return []
 
 def scrape_multiple_pages(base_url, num_pages):
-    # Scrape job postings from multiple pages
     all_jobs = []
     for page in range(1, num_pages + 1):
         url = f"{base_url}&page={page}"
@@ -97,7 +92,6 @@ def scrape_multiple_pages(base_url, num_pages):
     return all_jobs
 
 def remove_duplicates(jobs):
-    # Remove duplicate job postings based on unique links
     unique_links = set()
     unique_jobs = []
     for job in jobs:
@@ -106,34 +100,41 @@ def remove_duplicates(jobs):
             unique_jobs.append(job)
     return unique_jobs
 
-base_url = "https://www.shine.com/job-search/data-analyst-jobs?q=data-analyst"
-num_pages = 5
+if __name__ == "__main__":
+    # Read parameters from config.yaml
+    with open("config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+    
+    base_url = config['base_url']
+    num_pages = config['num_pages']
 
-jobs = scrape_multiple_pages(base_url, num_pages)
-unique_jobs = remove_duplicates(jobs)
+    # Scrape job postings
+    jobs = scrape_multiple_pages(base_url, num_pages)
+    unique_jobs = remove_duplicates(jobs)
 
-if unique_jobs:
-    job_data = {
-        'Company Name': [job.org_name for job in unique_jobs],
-        'Positions': [job.position for job in unique_jobs],
-        'Experience': [job.experience for job in unique_jobs],
-        'Salary': [job.salary for job in unique_jobs],
-        'Location': [job.location for job in unique_jobs],
-        'Profile Name': [job.profile_name for job in unique_jobs],
-        'Posted Time': [job.posted_time for job in unique_jobs],
-        'Skills': [job.skills for job in unique_jobs],
-        'Link': [job.link for job in unique_jobs]
-    }
+    if unique_jobs:
+        # Process scraped data and generate DataFrame
+        job_data = {
+            'Company Name': [job.org_name for job in unique_jobs],
+            'Positions': [job.position for job in unique_jobs],
+            'Experience': [job.experience for job in unique_jobs],
+            'Salary': [job.salary for job in unique_jobs],
+            'Location': [job.location for job in unique_jobs],
+            'Profile Name': [job.profile_name for job in unique_jobs],
+            'Posted Time': [job.posted_time for job in unique_jobs],
+            'Skills': [job.skills for job in unique_jobs],
+            'Link': [job.link for job in unique_jobs]
+        }
 
-    jobs_df = pd.DataFrame(job_data)
-    jobs_df['Posted Date'] = jobs_df['Posted Time'].apply(parse_posted_time)
-    jobs_df['Status'] = ['Hot' if (datetime.now() - parse_posted_time(time)).days < 3 else '-' for time in jobs_df['Posted Time']]
-    jobs_df['Actively Hiring'] = ['Yes' if (datetime.now() - parse_posted_time(time)).days < 3 else 'Not actively hiring' for time in jobs_df['Posted Time']]
+        jobs_df = pd.DataFrame(job_data)
+        jobs_df['Posted Date'] = jobs_df['Posted Time'].apply(parse_posted_time)
+        jobs_df['Status'] = ['Hot' if (datetime.now() - parse_posted_time(time)).days < 3 else '-' for time in jobs_df['Posted Time']]
+        jobs_df['Actively Hiring'] = ['Yes' if (datetime.now() - parse_posted_time(time)).days < 3 else 'Not actively hiring' for time in jobs_df['Posted Time']]
 
-    jobs_df = jobs_df[['Company Name', 'Positions', 'Experience', 'Salary', 'Location', 'Profile Name',
-                       'Posted Time', 'Posted Date', 'Status', 'Actively Hiring', 'Link', 'Skills']]
+        jobs_df = jobs_df[['Company Name', 'Positions', 'Experience', 'Salary', 'Location', 'Profile Name',
+                        'Posted Time', 'Posted Date', 'Status', 'Actively Hiring', 'Link', 'Skills']]
 
-    display(jobs_df)
-else:
-    print("No job postings found.")
+        print(jobs_df)
+    else:
+        print("No job postings found.")
 
