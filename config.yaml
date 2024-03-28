@@ -1,2 +1,12 @@
 base_url: "https://www.shine.com/job-search/data-analyst-jobs?q=data-analyst"
 num_pages: 5
+
+import yaml
+
+# Load configuration from config.yaml
+with open("config.yaml", "r") as config_file:
+    config = yaml.safe_load(config_file)
+
+# Extract configuration parameters
+base_url = config["base_url"]
+num_pages = config["num_pages"]
