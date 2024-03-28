@@ -2,6 +2,6 @@ requests
 beautifulsoup4
 pandas
 numpy
-PyYAML
+pyyaml
 
 
