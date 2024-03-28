@@ -1,3 +1,16 @@
+import os
+
+# Install the pyyaml package if not already installed
+try:
+    import yaml
+except ImportError:
+    print("Installing pyyaml package...")
+    os.system("pip install pyyaml")
+    print("pyyaml package installed successfully!")
+
+# Now you can import yaml module and use it to read config.yaml
+import yaml
+
 import subprocess
 
 # Install required packages
