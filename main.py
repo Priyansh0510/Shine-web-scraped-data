@@ -138,9 +138,7 @@ if unique_jobs:
     jobs_df = pd.DataFrame(job_data)
     jobs_df['Posted Date'] = jobs_df['Posted Time'].apply(parse_posted_time)
     jobs_df['Status'] = ['Hot' if (datetime.now() - parse_posted_time(time)).days < 3 else '-' for time in jobs_df['Posted Time']]
-
-    # Update the "Actively Hiring" column based on job status and recent updates
-    jobs_df['Actively Hiring'] = ['Yes' if job.status == 'Hot' else 'No' for job in unique_jobs]
+    jobs_df['Actively Hiring'] = ['Yes' if status == 'Hot' else 'No' for status in jobs_df['Status']]
 
     jobs_df = jobs_df[['Company Name', 'Positions', 'Experience', 'Salary', 'Location', 'Profile Name',
                     'Posted Time', 'Posted Date', 'Status', 'Actively Hiring', 'Link', 'Skills']]
