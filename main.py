@@ -157,6 +157,12 @@ if __name__ == "__main__":
                         'Posted Time', 'Posted Date', 'Status', 'Actively Hiring', 'Link', 'Skills']]
 
         print(jobs_df)
+
+        # Save DataFrame to CSV
+        csv_filename = "job_postings.csv"
+        jobs_df.to_csv(csv_filename, index=False)
+        print(f"Job postings saved to {csv_filename}")
+    
     else:
         print("No job postings found.")
 
