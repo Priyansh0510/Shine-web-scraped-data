@@ -139,8 +139,8 @@ if unique_jobs:
     jobs_df = jobs_df[['Company Name', 'Positions', 'Experience', 'Salary', 'Location', 'Profile Name',
                     'Posted Time', 'Posted Date', 'Status', 'Actively Hiring', 'Link', 'Skills']]
 
-    # Display DataFrame in table format
-    display(jobs_df)
+    # Print DataFrame
+    print(jobs_df)
 
     # Save DataFrame to CSV
     csv_filename = "job_postings.csv"
