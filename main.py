@@ -1,31 +1,11 @@
 import os
-
-# Install the pyyaml package if not already installed
-try:
-    import yaml
-except ImportError:
-    print("Installing pyyaml package...")
-    os.system("pip install pyyaml")
-    print("pyyaml package installed successfully!")
-
-# Now you can import yaml module and use it to read config.yaml
-import yaml
-
-import subprocess
-
-# Install required packages
-try:
-    subprocess.run(["pip", "install", "requests", "beautifulsoup4", "pandas", "numpy"], check=True)
-except subprocess.CalledProcessError as e:
-    print("Error occurred while installing dependencies:", e)
-
-# Now import the required modules
 import requests
-import yaml
-import pandas as pd
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+import pandas as pd
+import numpy as np
 import re
+from datetime import datetime, timedelta
+import yaml
 
 class JobPost:
     def __init__(self, org_name, position, experience, salary, location, profile_name, posted_time, link, skills):
@@ -122,48 +102,55 @@ def remove_duplicates(jobs):
             unique_jobs.append(job)
     return unique_jobs
 
-if __name__ == "__main__":
-    # Read parameters from config.yaml
-    with open("config.yaml", "r") as file:
-        config = yaml.safe_load(file)
+# Check if pyyaml is installed, if not, install it
+try:
+    import yaml
+except ImportError:
+    print("Installing pyyaml package...")
+    os.system("pip install pyyaml")
+    print("pyyaml package installed successfully!")
+
+# Read parameters from config.yaml
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
     
-    base_url = config['base_url']
-    num_pages = config['num_pages']
+base_url = config['base_url']
+num_pages = config['num_pages']
 
-    # Scrape job postings
-    jobs = scrape_multiple_pages(base_url, num_pages)
-    unique_jobs = remove_duplicates(jobs)
+# Scrape job postings
+jobs = scrape_multiple_pages(base_url, num_pages)
+unique_jobs = remove_duplicates(jobs)
 
-    if unique_jobs:
-        # Process scraped data and generate DataFrame
-        job_data = {
-            'Company Name': [job.org_name for job in unique_jobs],
-            'Positions': [job.position for job in unique_jobs],
-            'Experience': [job.experience for job in unique_jobs],
-            'Salary': [job.salary for job in unique_jobs],
-            'Location': [job.location for job in unique_jobs],
-            'Profile Name': [job.profile_name for job in unique_jobs],
-            'Posted Time': [job.posted_time for job in unique_jobs],
-            'Skills': [job.skills for job in unique_jobs],
-            'Link': [job.link for job in unique_jobs]
-        }
+if unique_jobs:
+    # Process scraped data and generate DataFrame
+    job_data = {
+        'Company Name': [job.org_name for job in unique_jobs],
+        'Positions': [job.position for job in unique_jobs],
+        'Experience': [job.experience for job in unique_jobs],
+        'Salary': [job.salary for job in unique_jobs],
+        'Location': [job.location for job in unique_jobs],
+        'Profile Name': [job.profile_name for job in unique_jobs],
+        'Posted Time': [job.posted_time for job in unique_jobs],
+        'Skills': [job.skills for job in unique_jobs],
+        'Link': [job.link for job in unique_jobs]
+    }
 
-        jobs_df = pd.DataFrame(job_data)
-        jobs_df['Posted Date'] = jobs_df['Posted Time'].apply(parse_posted_time)
-        jobs_df['Status'] = ['Hot' if (datetime.now() - parse_posted_time(time)).days < 3 else '-' for time in jobs_df['Posted Time']]
-        jobs_df['Actively Hiring'] = ['Yes' if (datetime.now() - parse_posted_time(time)).days < 3 else 'Not actively hiring' for time in jobs_df['Posted Time']]
+    jobs_df = pd.DataFrame(job_data)
+    jobs_df['Posted Date'] = jobs_df['Posted Time'].apply(parse_posted_time)
+    jobs_df['Status'] = ['Hot' if (datetime.now() - parse_posted_time(time)).days < 3 else '-' for time in jobs_df['Posted Time']]
 
-        jobs_df = jobs_df[['Company Name', 'Positions', 'Experience', 'Salary', 'Location', 'Profile Name',
-                        'Posted Time', 'Posted Date', 'Status', 'Actively Hiring', 'Link', 'Skills']]
+    # Update the "Actively Hiring" column based on job status and recent updates
+    jobs_df['Actively Hiring'] = ['Yes' if job.status == 'Hot' else 'No' for job in unique_jobs]
 
-        print(jobs_df)
+    jobs_df = jobs_df[['Company Name', 'Positions', 'Experience', 'Salary', 'Location', 'Profile Name',
+                    'Posted Time', 'Posted Date', 'Status', 'Actively Hiring', 'Link', 'Skills']]
 
-        # Save DataFrame to CSV
-        csv_filename = "job_postings.csv"
-        jobs_df.to_csv(csv_filename, index=False)
-        print(f"Job postings saved to {csv_filename}")
+    print(jobs_df)
+
+    # Save DataFrame to CSV
+    csv_filename = "job_postings.csv"
+    jobs_df.to_csv(csv_filename, index=False)
+    print(f"Job postings saved to {csv_filename}")
     
-    else:
-        print("No job postings found.")
-
-
+else:
+    print("No job postings found.")
