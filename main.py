@@ -102,18 +102,13 @@ def remove_duplicates(jobs):
             unique_jobs.append(job)
     return unique_jobs
 
-# Check if pyyaml is installed, if not, install it
-try:
-    import yaml
-except ImportError:
-    print("Installing pyyaml package...")
-    os.system("pip install pyyaml")
-    print("pyyaml package installed successfully!")
+def read_config():
+    with open("config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+    return config
 
 # Read parameters from config.yaml
-with open("config.yaml", "r") as file:
-    config = yaml.safe_load(file)
-    
+config = read_config()
 base_url = config['base_url']
 num_pages = config['num_pages']
 
@@ -137,13 +132,15 @@ if unique_jobs:
 
     jobs_df = pd.DataFrame(job_data)
     jobs_df['Posted Date'] = jobs_df['Posted Time'].apply(parse_posted_time)
-    jobs_df['Status'] = ['Hot' if (datetime.now() - parse_posted_time(time)).days < 3 else '-' for time in jobs_df['Posted Time']]
-    jobs_df['Actively Hiring'] = ['Yes' if status == 'Hot' else 'No' for status in jobs_df['Status']]
+    jobs_df['Days Posted'] = (datetime.now() - jobs_df['Posted Date']).dt.days
+    jobs_df['Status'] = ['Hot' if days < 3 else '-' for days in jobs_df['Days Posted']]
+    jobs_df['Actively Hiring'] = ['Yes' if days < 30 else 'No' for days in jobs_df['Days Posted']] # Assume actively hiring within 30 days
 
     jobs_df = jobs_df[['Company Name', 'Positions', 'Experience', 'Salary', 'Location', 'Profile Name',
                     'Posted Time', 'Posted Date', 'Status', 'Actively Hiring', 'Link', 'Skills']]
 
-    print(jobs_df)
+    # Display DataFrame in table format
+    display(jobs_df)
 
     # Save DataFrame to CSV
     csv_filename = "job_postings.csv"
